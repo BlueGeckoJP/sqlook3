@@ -15,7 +15,7 @@ fn print_help() -> Unit {
 ///|
 fn get_args() -> (String, ArrayView[String]) raise Error {
   let args = @env.args()
-  if args.length() <= 2 {
+  if args.length() < 2 {
     fail("Not enough arguments")
   }
   let database_path = args.get(1)
@@ -24,6 +24,17 @@ fn get_args() -> (String, ArrayView[String]) raise Error {
   }
   let table_names = args[2:]
   return (database_path.unwrap(), table_names)
+}
+
+///|
+fn get_all_table_names(conn : @sqlite3.Connection) -> Array[String] raise Error {
+  let result : Array[String] = []
+  let stmt = conn.prepare("SELECT name FROM sqlite_master WHERE type='table'")
+  while stmt.step() {
+
+  }
+  stmt.finalize()
+  result
 }
 
 ///|
@@ -41,6 +52,7 @@ fn main {
       return
     }
   }
+  println(get_all_table_names(conn) catch { err => [] })
   conn.close() catch {
     err => {
       println("An error occurred while closing the database: \{err}")
