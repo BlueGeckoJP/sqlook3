@@ -1,4 +1,12 @@
 ///|
+#borrow(out_len)
+extern "c" fn utf16le_to_utf8(
+  input : Bytes,
+  input_len : Int,
+  out_len : Int,
+) -> Byte = "utf16le_to_utf8"
+
+///|
 fn print_help() -> Unit {
   let args0 = match @env.args().get(0) {
     Some(args0) => args0.split("/").last().unwrap_or("sqlook3")
@@ -31,7 +39,7 @@ fn get_all_table_names(conn : @sqlite3.Connection) -> Array[String] raise Error 
   let result : Array[String] = []
   let stmt = conn.prepare("SELECT name FROM sqlite_master WHERE type='table'")
   while stmt.step() {
-
+    result.push(stmt.column_blob_as_string(index=0))
   }
   stmt.finalize()
   result
@@ -52,7 +60,15 @@ fn main {
       return
     }
   }
-  println(get_all_table_names(conn) catch { err => [] })
+  let table_names = utf16le_to_utf8(
+    get_all_table_names(conn) catch {
+      err => {
+        println("An error occurred while getting table names: \{err}")
+        return
+      }
+    },
+  )
+  println(table_names)
   conn.close() catch {
     err => {
       println("An error occurred while closing the database: \{err}")
