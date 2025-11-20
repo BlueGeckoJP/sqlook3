@@ -1,8 +1,14 @@
 ///|
 fn main {
-  let conn = @sqlite3.Connection::open("example.db") catch {
+  let database_url = @env.args().get(1)
+  if database_url == None {
+    print_help()
+    return
+  }
+  let conn = @sqlite3.Connection::open(database_url.unwrap()) catch {
     err => {
       println("An error occurred while opening the database: \{err}")
+      print_help()
       return
     }
   }
@@ -12,4 +18,18 @@ fn main {
       return
     }
   }
+}
+
+///|
+fn print_help() -> Unit {
+  let args0 = match @env.args().get(0) {
+    Some(args0) => args0.split("/").last().unwrap_or("sqlook3")
+    None => "sqlook3"
+  }
+  println("Usage: \{args0} <database_url> <table_names...>")
+  println("Example: \{args0} sqlite3://my_database.db users orders\n")
+  println("database_url: The URL of the database file")
+  println(
+    "table_names: The names of the tables to look at, multiple selections possible",
+  )
 }
